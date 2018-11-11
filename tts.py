@@ -27,6 +27,7 @@ def login(eid, pwd):
     return rvalue
 
 def register(eid):
+    print("--- Registration ---")
     pwd = input("Enter New Password :\t")
     cpwd = input("Enter Password again :\t")
     if pwd!=cpwd:
@@ -34,6 +35,8 @@ def register(eid):
         register(eid)
     else:
         Employee_IDs[eid] = pwd
+        with open('employeeids.json','a+') as e:
+            json.dump(Employee_IDs,e)
         print("Password Change Successfull\n")
 
 eid = input("Enter Employee ID : \t")
