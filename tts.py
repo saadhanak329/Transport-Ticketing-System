@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import pymysql as sql
 
 try:
     f = open("employeeids.json","r")
@@ -9,6 +10,19 @@ try:
 except Exception as e:
     print("Unable to Open employeeids.json. Exception: ",e)
 print("\n\n-------- Welcome to Transport Ticketing System! --------\n")
+
+# SQL Parameters
+sqlsrvr = "localhost"
+sqluser = "root"
+sqlpwd = "toor"
+sqldb = "ttsdb"
+
+db = sql.connect(sqlsrvr,sqluser,sqlpwd,sqldb)
+cursor = db.cursor()
+cursor.execute("SELECT * FROM ttsdb.ula WHERE ")
+data = cursor.fetchall()
+print(data[1])
+db.close()
 
 def login(eid, pwd):
     rvalue = True
@@ -48,7 +62,7 @@ if rvalue == "PWD":
     ch = input("\n\n1.Change Password\n2.Exit\n\nEnter your choice :\t")
     if ch=="1":
         register(eid)
-if rvalue == "EID":
+elif rvalue == "EID":
     ch = input("\n\n1.Register Employee ID\n2.Exit\n\nEnter your choice :\t")
     if ch=="1":
         register(eid)
