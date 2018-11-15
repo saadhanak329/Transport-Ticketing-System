@@ -1,7 +1,8 @@
 import os
 import sys
 import json
-import pymysql as sql # to import sql
+import time
+import pymysql as sql
 
 # Employee login
 def login(cursor):
@@ -45,9 +46,13 @@ def register(cursor):
         cursor.execute(sqlquery)
         dbpwd = cursor.fetchone()
         if pwd == dbpwd[0]:
-            print("Registration Successful\n")
+            print("\nRegistration Successful.\n\nYou will be redirected to login now...\n")
+            time.sleep(1)
+            login(cursor)
         else:
-            print("Registration Unsuccessful. Try Again?")
+            ch = ("\nRegistration Unsuccessful. Try Again? (y/n)")
+            if ch.lower() in ['y','yes']:
+                register(cursor)
 
 if __name__ == "__main__":
     print("\n\n-------- Welcome to Transport Ticketing System! --------\n")
