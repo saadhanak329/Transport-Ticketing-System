@@ -4,9 +4,9 @@ import json
 import pymysql as sql
 
 try:
-    f = open("employeeids.json","r")
-    Employee_IDs = json.load(f)
-    f.close()
+    f = open("employeeids.json","r")/*Accessing the emplopyeeids.json file and givimg permision for reading only*/
+    Employee_IDs = json.load(f)/*loading the json file f*/
+    f.close()/*closing the json file*/
 except Exception as e:
     print("Unable to Open employeeids.json. Exception: ",e)
 print("\n\n-------- Welcome to Transport Ticketing System! --------\n")
