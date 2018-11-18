@@ -9,7 +9,7 @@ import subprocess
 from math import sin, cos, sqrt, atan2, radians
 
 # Employee login
-def login(cursor):
+def login(cursor):#login setup for employee
     print("\n--- Employee Login ---\n")
     eid = input("\nEnter Employee ID :\t")
     while(len(eid)!=4):
@@ -34,7 +34,7 @@ def login(cursor):
         if reg.lower() in ['y','yes']:
             register(cursor)
     
-# Registration
+# Registration and change of password
 def register(cursor):
     print("\n--- Registration ---\n")
     eid = input("Enter Employee ID :\t")
