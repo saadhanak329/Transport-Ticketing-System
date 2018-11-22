@@ -29,6 +29,9 @@ def login(cursor):#login setup for employee
         if pwd == dbpwd[0]:
             print("Login Successful\n")
             routesetup(cursor)
+        else:
+            print("Password Incorrect\n")
+            login(cursor)
     else:
         reg = input("Employee ID has not been registered before. Would you like register now? (y/n)\t")
         if reg.lower() in ['y','yes']:
@@ -95,8 +98,7 @@ def transact(cursor):
         print("Please scan your BMTC Card by placing it infront of the Camera to continue\n")
         # accountno = subprocess.check_output("python detect_barcode.py --video video/coupon.mov", shell=True).decode()
         # print(accountno)
-        a = input()
-        accountno = "1234567890"
+        accountno = input("Enter Account Number Manually")
         sqlquery = "SELECT * FROM ttsdb.customer WHERE accountno="+accountno
         li = []
         cust_details = []
