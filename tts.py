@@ -68,6 +68,9 @@ def distcalc(la1,lo1,la2,lo2):
     res = R * b
     return res
 
+def ratecalc(dist):
+    return dist*10
+
 # Setting Up Route
 def routesetup(cursor):
     print("\n--- Route Setup ---\n")
@@ -79,7 +82,6 @@ def routesetup(cursor):
     li = cursor.fetchall()
     for i in li:
         db_routeid_list.append(i[0])
-    print(db_routeid_list)
     if routeid in db_routeid_list:
         print("\nRoute Successfully initialized\n")
         transact(cursor)
@@ -91,12 +93,42 @@ def transact(cursor):
     while True:
         print("\n\n-------- Welcome to Transport Ticketing System! --------\n")
         print("Please scan your BMTC Card by placing it infront of the Camera to continue\n")
-        subprocess.check_output("python detect_barcode.py", shell=True).decode()
+        # accountno = subprocess.check_output("python detect_barcode.py --video video/coupon.mov", shell=True).decode()
+        # print(accountno)
+        a = input()
+        accountno = "1234567890"
+        sqlquery = "SELECT * FROM ttsdb.customer WHERE accountno="+accountno
+        li = []
+        cust_details = []
+        cursor.execute(sqlquery)
+        li = cursor.fetchall()
+        for i in li[0]:
+            cust_details.append(i)
+        if cust_details[2]==0:
+            cust_details[2]=1
+            g = geocoder.ip('me')
+            sqlquery = "UPDATE ttsdb.customer SET latitude="+str(g.lat)+",longitude="+str(g.lat)+" WHERE accountno="+str(cust_details[0])
+            if cursor.execute(sqlquery) == 1:
+                print("\nScan Successful. Happy Journey!\n")
+                print("------ Travelling ----\n")
+                time.sleep(2)
+            else:
+                print("\n Couldn't Scan your card. Please try again\n")
+                transact(cursor)
+        elif cust_details[2]==1:
+            g = geocoder.ip('me')
+            distance_travelled = distcalc(cust_details[4],cust_details[5],g.lat,g.long)
+            cost = ratecalc(distance_travelled)
+            if cost<=cust_details[3]:
+                sqlquery = "UPDATE ttsdb.customer SET amount="+str(cust_details[3]-cost)+" WHERE accountno="+str(cust_details[0])
+                print("Amount of "+cost+" has been deducted. Thank You for travelling with us!")
+            else:
+                sqlquery = "UPDATE ttsdb.customer SET amount="+str(cust_details[3])+" WHERE accountno="+str(cust_details[0])
+                print("Your Account has insufficient funds. Rs."+cust_details[3]+" has been deducted. Please pay the remaining amount to the conductor. Thank You for travelling with us.")
+    return 0
         
 if __name__ == "__main__":
     print("\n\n-------- Welcome to Transport Ticketing System! --------\n")
-    g = geocoder.ip('me')
-    print(g.lat)
 
     choice = input("\n1. Login\n2. Registration\n3. Exit\n\n")
     # SQL Parameters
