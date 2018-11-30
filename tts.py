@@ -27,13 +27,16 @@ def login(cursor):#login setup for employee
         cursor.execute(sqlquery)
         dbpwd = cursor.fetchone()
         if pwd == dbpwd[0]:
-            print("Login Successful\n")
+            print(">> Login Successful\n")
+            time.sleep(1)
             routesetup(cursor)
         else:
-            print("Password Incorrect\n")
+            print(">> Password Incorrect\n")
+            time.sleep(1)
             login(cursor)
     else:
-        reg = input("Employee ID has not been registered before. Would you like register now? (y/n)\t")
+        reg = input(">> Employee ID has not been registered before. Would you like register now? (y/n)\t")
+        time.sleep(1)
         if reg.lower() in ['y','yes']:
             register(cursor)
     
@@ -44,7 +47,8 @@ def register(cursor):
     pwd = input("Enter New Password :\t")
     cpwd = input("Enter Password again :\t")
     if pwd!=cpwd:
-        print("Passwords not matching. Try again\n")
+        print(">> Passwords not matching. Try again\n")
+        time.sleep(1)
         register(eid)
     else:
         sqlquery = "INSERT INTO ttsdb.ula(eid,password) VALUES("+eid+",\""+pwd+"\")"
@@ -53,11 +57,12 @@ def register(cursor):
         cursor.execute(sqlquery)
         dbpwd = cursor.fetchone()
         if pwd == dbpwd[0]:
-            print("\nRegistration Successful.\n\nYou will be redirected to login now...\n")
+            print("\n>> Registration Successful.\n\n>> You will be redirected to login now...\n")
             time.sleep(1)
             login(cursor)
         else:
-            ch = ("\nRegistration Unsuccessful. Try Again? (y/n)")
+            ch = ("\n>> Registration Unsuccessful. Try Again? (y/n)")
+            time.sleep(1)
             if ch.lower() in ['y','yes']:
                 register(cursor)
 
@@ -72,7 +77,12 @@ def distcalc(la1,lo1,la2,lo2):
     return res
 
 def ratecalc(dist):
-    return dist*10
+    if dist<2:
+        return 10
+    elif dist<10:
+        return dist*4
+    else:
+        return dist*3
 
 # Setting Up Route
 def routesetup(cursor):
@@ -86,7 +96,8 @@ def routesetup(cursor):
     for i in li:
         db_routeid_list.append(i[0])
     if routeid in db_routeid_list:
-        print("\nRoute Successfully initialized\n")
+        print("\n>> Route Successfully initialized\n")
+        time.sleep(2)
         transact(cursor)
     else:
         print("Invalid Route ID")
@@ -98,7 +109,7 @@ def transact(cursor):
         print("Please scan your BMTC Card by placing it infront of the Camera to continue\n")
         # accountno = subprocess.check_output("python detect_barcode.py --video video/coupon.mov", shell=True).decode()
         # print(accountno)
-        accountno = input("Enter Account Number Manually")
+        accountno = input("Enter Account Number Manually:\t")
         sqlquery = "SELECT * FROM ttsdb.customer WHERE accountno="+accountno
         li = []
         cust_details = []
@@ -111,11 +122,12 @@ def transact(cursor):
             g = geocoder.ip('me')
             sqlquery = "UPDATE ttsdb.customer SET latitude="+str(g.lat)+",longitude="+str(g.lat)+" WHERE accountno="+str(cust_details[0])
             if cursor.execute(sqlquery) == 1:
-                print("\nScan Successful. Happy Journey!\n")
+                print("\n>> Scan Successful. Happy Journey!\n")
                 print("------ Travelling ----\n")
                 time.sleep(2)
             else:
-                print("\n Couldn't Scan your card. Please try again\n")
+                print("\n>> Couldn't Scan your card. Please try again\n")
+                time.sleep(1)
                 transact(cursor)
         elif cust_details[2]==1:
             g = geocoder.ip('me')
@@ -123,10 +135,12 @@ def transact(cursor):
             cost = ratecalc(distance_travelled)
             if cost<=cust_details[3]:
                 sqlquery = "UPDATE ttsdb.customer SET amount="+str(cust_details[3]-cost)+" WHERE accountno="+str(cust_details[0])
-                print("Amount of "+cost+" has been deducted. Thank You for travelling with us!")
+                print(">> Amount of "+cost+" has been deducted. Thank You for travelling with us!")
+                time.sleep(2)
             else:
                 sqlquery = "UPDATE ttsdb.customer SET amount="+str(cust_details[3])+" WHERE accountno="+str(cust_details[0])
-                print("Your Account has insufficient funds. Rs."+cust_details[3]+" has been deducted. Please pay the remaining amount to the conductor. Thank You for travelling with us.")
+                print(">> Your Account has insufficient funds. Rs."+cust_details[3]+" has been deducted. Please pay the remaining amount to the conductor. Thank You for travelling with us.")
+                time.sleep(2)
     return 0
         
 if __name__ == "__main__":
