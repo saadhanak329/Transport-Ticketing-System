@@ -6,7 +6,7 @@ import pymysql as sql
 import geocoder
 import subprocess
 # from detect_barcode import VideoStream
-from math import sin, cos, sqrt, atan2, radians
+from math import sin, cos, sqrt, atan2, radians, floor
 
 # Employee login
 def login(cursor):#login setup for employee
@@ -27,16 +27,16 @@ def login(cursor):#login setup for employee
         cursor.execute(sqlquery)
         dbpwd = cursor.fetchone()
         if pwd == dbpwd[0]:
-            print(">> Login Successful\n")
             time.sleep(1)
+            print("\n>> Login Successful\n")
             routesetup(cursor)
         else:
-            print(">> Password Incorrect\n")
             time.sleep(1)
+            print("\n>> Password Incorrect\n")
             login(cursor)
     else:
-        reg = input(">> Employee ID has not been registered before. Would you like register now? (y/n)\t")
         time.sleep(1)
+        reg = input("\n>> Employee ID has not been registered before. Would you like register now? (y/n)\t")
         if reg.lower() in ['y','yes']:
             register(cursor)
     
@@ -57,23 +57,28 @@ def register(cursor):
         cursor.execute(sqlquery)
         dbpwd = cursor.fetchone()
         if pwd == dbpwd[0]:
-            print("\n>> Registration Successful.\n\n>> You will be redirected to login now...\n")
             time.sleep(1)
+            print("\n>> Registration Successful.\n\n>> You will be redirected to login now...\n")
             login(cursor)
         else:
-            ch = ("\n>> Registration Unsuccessful. Try Again? (y/n)")
             time.sleep(1)
+            ch = ("\n>> Registration Unsuccessful. Try Again? (y/n)")
             if ch.lower() in ['y','yes']:
                 register(cursor)
 
 # Calculating Distance in Kms between 2 Lat,Long Pairs
 def distcalc(la1,lo1,la2,lo2):
-    R=6373.0
-    dlo = radians(lo2) - radians(lo1)
-    dla = radians(la2) - radians(la1)
-    a = sin(dla / 2)**2 + cos(la1) * cos(la2) * sin(dlo / 2)**2
-    b = 2 * atan2(sqrt(a), sqrt(1 - a))
-    res = R * b
+    R=6.371
+    la1 = 12.9249 #Banashankari Coords
+    lo1 = 12.9260
+    la2 = 77.5662
+    lo2 = 77.6762 #Bellandur Coords
+    dlon = radians(lo2-lo1)
+    dlat = radians(la2-la1)
+    a = sin(dlat/2)*sin(dlat/2) + cos(radians(la1))*cos(radians(la2))*sin(dlon/2)*sin(dlon/2)
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    res = floor(R * c)
+    print("\nDistance Travelled:\t",res,"\n")
     return res
 
 def ratecalc(dist):
@@ -96,8 +101,8 @@ def routesetup(cursor):
     for i in li:
         db_routeid_list.append(i[0])
     if routeid in db_routeid_list:
+        time.sleep(1)
         print("\n>> Route Successfully initialized\n")
-        time.sleep(2)
         transact(cursor)
     else:
         print("Invalid Route ID")
@@ -105,7 +110,7 @@ def routesetup(cursor):
 
 def transact(cursor):
     while True:
-        print("\n\n-------- Welcome to Transport Ticketing System! --------\n")
+        print("\n\n\n-------- Welcome to Transport Ticketing System! --------\n")
         print("Please scan your BMTC Card by placing it infront of the Camera to continue\n")
         # accountno = subprocess.check_output("python detect_barcode.py --video video/coupon.mov", shell=True).decode()
         # print(accountno)
@@ -113,34 +118,37 @@ def transact(cursor):
         sqlquery = "SELECT * FROM ttsdb.customer WHERE accountno="+accountno
         li = []
         cust_details = []
+        flag = 0
         cursor.execute(sqlquery)
         li = cursor.fetchall()
-        for i in li[0]:
-            cust_details.append(i)
-        if cust_details[2]==0:
-            cust_details[2]=1
-            g = geocoder.ip('me')
-            sqlquery = "UPDATE ttsdb.customer SET latitude="+str(g.lat)+",longitude="+str(g.lat)+" WHERE accountno="+str(cust_details[0])
-            if cursor.execute(sqlquery) == 1:
+        if li: 
+            for i in li[0]:
+                cust_details.append(i)
+            if cust_details[2]==0:
+                sqlquery = "UPDATE ttsdb.customer SET flag=1 WHERE accountno="+str(cust_details[0])
+                cursor.execute(sqlquery)
+                g = geocoder.ip('me')
+                sqlquery = "UPDATE ttsdb.customer SET latitude="+str(g.lat)+",longitude="+str(g.lat)+" WHERE accountno="+str(cust_details[0])
+                try:
+                    cursor.execute(sqlquery)
+                except Exception:
+                    pass
                 print("\n>> Scan Successful. Happy Journey!\n")
-                print("------ Travelling ----\n")
+                print("\n\n------ Travelling ----\n\n")
                 time.sleep(2)
-            else:
-                print("\n>> Couldn't Scan your card. Please try again\n")
-                time.sleep(1)
                 transact(cursor)
-        elif cust_details[2]==1:
-            g = geocoder.ip('me')
-            distance_travelled = distcalc(cust_details[4],cust_details[5],g.lat,g.long)
-            cost = ratecalc(distance_travelled)
-            if cost<=cust_details[3]:
-                sqlquery = "UPDATE ttsdb.customer SET amount="+str(cust_details[3]-cost)+" WHERE accountno="+str(cust_details[0])
-                print(">> Amount of "+cost+" has been deducted. Thank You for travelling with us!")
-                time.sleep(2)
-            else:
-                sqlquery = "UPDATE ttsdb.customer SET amount="+str(cust_details[3])+" WHERE accountno="+str(cust_details[0])
-                print(">> Your Account has insufficient funds. Rs."+cust_details[3]+" has been deducted. Please pay the remaining amount to the conductor. Thank You for travelling with us.")
-                time.sleep(2)
+            elif cust_details[2]==1:
+                g = geocoder.ip('me')
+                distance_travelled = distcalc(cust_details[4],cust_details[5],float(12.9249),float(77.5662))
+                cost = ratecalc(distance_travelled)
+                if float(cost)<=float(cust_details[3]):
+                    sqlquery = "UPDATE ttsdb.customer SET amount="+str(float(cust_details[3])-float(cost))+" WHERE accountno="+str(cust_details[0])
+                    time.sleep(2)
+                    print(">> Amount of "+str(cost)+" has been deducted. Thank You for travelling with us!")
+                else:
+                    sqlquery = "UPDATE ttsdb.customer SET amount="+str(cust_details[3])+" WHERE accountno="+str(cust_details[0])
+                    time.sleep(2)
+                    print(">> Your Account has insufficient funds. Rs."+cust_details[3]+" has been deducted. Please pay the remaining amount to the conductor. Thank You for travelling with us.")
     return 0
         
 if __name__ == "__main__":
